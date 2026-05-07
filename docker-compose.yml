@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  calibre-web:
+    image: lanphuong2000/calibre-web:${IMAGE_TAG:-latest}
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./config:/root/.config/calibre-web
+      - ./books:/books
+    restart: always
