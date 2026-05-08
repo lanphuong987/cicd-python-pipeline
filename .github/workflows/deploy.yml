@@ -96,11 +96,24 @@ jobs:
 
            # Health check
            sleep 15
-           STATUS=$(docker inspect --format='{{.State.Health.Status}}' ${{env.CONTAINER_NAME}} 2>/dev/null)
+           
+           for i in $(seq 1 10); do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' ${{env.CONTAINER_NAME}} 2>/dev/null)
+            echo "Status: $STATUS"
+
+            if [ "$STATUS" = "healthy" ]; then
+             echo "✅ Container healthy"
+             break
+            fi
+           echo "Waiting... ($i/10) status=$STATUS"
+           sleep 5
+           done
+
+           #Auto rollback
            if [ "$STATUS" != "healthy" ]; then
             echo "❌ Deploy failed, rolling back to $PREVIOUS_TAG"
             IMAGE_TAG=$PREVIOUS_TAG docker compose up -d --no-build --force-recreate
-            exit 1
+           exit 1
            fi
 
 
