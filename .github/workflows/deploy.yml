@@ -80,13 +80,12 @@ jobs:
 
            docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-           echo "IMAGE_TAG=${{ github.sha }}" > .env
-           echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> .env
-           echo "IMAGE_NAME=${{ env.IMAGE_NAME }}" >> .env
+           IMAGE_TAG=${{ github.sha }} \
+           DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} \
+           IMAGE_NAME=${{ env.IMAGE_NAME }} \
 
            docker compose up -d --no-build --force-recreate
 
            docker image prune -f
         env:
          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-         
