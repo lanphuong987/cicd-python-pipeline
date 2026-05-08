@@ -76,13 +76,13 @@ jobs:
           port: 2222
           envs: IMAGE_NAME,GITHUB_SHA,DOCKER_USERNAME
           script: |
-           cd /www/wwwroot/calibre_web
+           cd /www/wwwroot/calibre_web/calibre-web-source
 
            docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-           IMAGE_TAG=${{ github.sha }} \
-           DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} \
-           IMAGE_NAME=${{ env.IMAGE_NAME }} \
+           echo "IMAGE_TAG=${{ github.sha }}" > .env
+           echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> .env
+           echo "IMAGE_NAME=${{ env.IMAGE_NAME }}" >> .env
 
            docker compose up -d --no-build --force-recreate
 
