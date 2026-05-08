@@ -3,6 +3,12 @@ version: "3.9"
 services:
   calibre-web:
     image: lanphuong2000/calibre-web:${IMAGE_TAG:-latest}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     ports:
       - "8083:8083"
     volumes:

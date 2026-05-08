@@ -9,6 +9,8 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   IMAGE_NAME: calibre-web
+  CONTAINER_NAME: calibre-web-source-calibre-web-1
+
 
 jobs:
   test:
@@ -78,13 +80,35 @@ jobs:
           script: |
            cd /www/wwwroot/calibre_web/calibre-web-source
 
-           docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+           PREVIOUS_TAG=$(cat .current_tag 2>/dev/null || echo "latest")
+           NEW_TAG=${{ github.sha }}
+           
+
+           # Pull and build image
+           docker pull ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:$NEW_TAG
 
            echo "IMAGE_TAG=${{ github.sha }}" > .env
-           echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> .env
+           echo "DOCKER_USERNAME=${{ env.DOCKER_USERNAME }}" >> .env
            echo "IMAGE_NAME=${{ env.IMAGE_NAME }}" >> .env
 
            docker compose up -d --no-build --force-recreate
+          
+
+           # Health check
+           sleep 15
+           STATUS=$(docker inspect --format='{{.State.Health.Status}}' ${{env.CONTAINER_NAME}} 2>/dev/null)
+           if [ "$STATUS" != "healthy" ]; then
+            echo "❌ Deploy failed, rolling back to $PREVIOUS_TAG"
+            IMAGE_TAG=$PREVIOUS_TAG docker compose up -d --no-build --force-recreate
+            exit 1
+           fi
+
+
+           # save current tag for next rollback
+           echo $NEW_TAG > .current_tag
+           echo "✅ Deploy successful: $NEW_TAG"
+           docker image prune -f
+
 
            docker image prune -f
         env:
