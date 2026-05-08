@@ -85,6 +85,7 @@ jobs:
            
 
            # Pull and build image
+           git pull origin main
            docker pull ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:$NEW_TAG
 
            echo "IMAGE_TAG=${{ github.sha }}" > .env
