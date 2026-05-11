@@ -96,7 +96,6 @@ jobs:
           
 
            # Health check
-           sleep 15
            
            for i in $(seq 1 10); do
             STATUS=$(docker inspect --format='{{.State.Health.Status}}' ${{env.CONTAINER_NAME}} 2>/dev/null)

@@ -4,7 +4,7 @@ services:
   calibre-web:
     image: lanphuong2000/calibre-web:${IMAGE_TAG:-latest}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8083"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8083"]
       interval: 10s
       timeout: 5s
       retries: 3
