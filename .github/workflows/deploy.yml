@@ -10,9 +10,11 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   IMAGE_NAME: calibre-web
   CONTAINER_NAME: calibre-web-source-calibre-web-1
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
 
 
 jobs:
+  # ─── Job 1: Linting & Security Scan ───
   test:
     runs-on: ubuntu-latest
     steps:
@@ -69,6 +71,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Scan Docker image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+         image-ref: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+         format: 'table'
+         severity: 'HIGH,CRITICAL'
+         exit-code: '0'
+
       - name: Deploy to server via ssh
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -84,9 +94,9 @@ jobs:
            NEW_TAG=${{ github.sha }}
            
 
-           # Pull and build image
+      
            git pull origin main
-           docker pull ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:$NEW_TAG
+           docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:$NEW_TAG
 
            echo "IMAGE_TAG=${{ github.sha }}" > .env
            echo "DOCKER_USERNAME=${{ env.DOCKER_USERNAME }}" >> .env
@@ -120,9 +130,20 @@ jobs:
            # save current tag for next rollback
            echo $NEW_TAG > .current_tag
            echo "✅ Deploy successful: $NEW_TAG"
-           docker image prune -f
+           docker image prune -f 
 
 
-           docker image prune -f
-        env:
-         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      - name: Notify on failure
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            ❌ Deploy FAILED
+            Repo: ${{ github.repository }}
+            Commit: ${{ github.sha }}
+            By: ${{ github.actor }}
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+ 
+        
